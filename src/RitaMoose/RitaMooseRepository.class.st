@@ -10,23 +10,55 @@ Class {
 		'glhProject',
 		'language'
 	],
+	#classVars : [
+		'Token'
+	],
 	#category : 'RitaMoose',
 	#package : 'RitaMoose'
 }
 
 { #category : 'instance creation' }
-RitaMooseRepository class >> owner: anOwner name: aName token: aToken [
-	"Import the GitHub project and prepare the analysis of its commits"
+RitaMooseRepository class >> owner: anOwner name: aName [
+	"Import the GitHub project and prepare the analysis of its commits. The token must be set with #token:"
 
 	^ self new
-		  initializeOwner: anOwner name: aName token: aToken;
+		  initializeOwner: anOwner name: aName;
 		  yourself
+]
+
+{ #category : 'token' }
+RitaMooseRepository class >> resetToken [
+	"Forget the GitHub token of the session"
+
+	<script>
+	Token := nil
+]
+
+{ #category : 'accessing' }
+RitaMooseRepository class >> token [
+	"GitHub token shared by all the repositories of the session"
+
+	^ Token
+]
+
+{ #category : 'accessing' }
+RitaMooseRepository class >> token: aString [
+	"Set the GitHub token once for the session"
+
+	Token := aString
 ]
 
 { #category : 'private' }
 RitaMooseRepository >> accepts: aPath [
 
 	^ aPath isNotNil and: [ language acceptsPath: aPath ]
+]
+
+{ #category : 'analysis' }
+RitaMooseRepository >> changedFilesOf: aRitaMooseCommit [
+	"Files changed by aRitaMooseCommit, whatever their language, with their change kind. The file contents are not fetched."
+
+	^ (self diffsOf: aRitaMooseCommit glhCommit) collect: [ :diff | RitaMooseChangedFile fromDiff: diff ]
 ]
 
 { #category : 'accessing' }
@@ -55,19 +87,25 @@ RitaMooseRepository >> decodeContent: aResponse [
 
 { #category : 'private' }
 RitaMooseRepository >> diffsOf: aGLHCommit [
+	"Diffs of the commit, read from GitHub without importing them into the GitProjectHealth model:
+	importing them there fails when the model already holds a diff (its equality block expects diff ranges)."
 
-	^ importer importDiffOfCommit: aGLHCommit
+	| response |
+	self flag: #todo. "I should import the difh with #importDiffOfCommit:"
+	response := importer repoApi commits getCommit: aGLHCommit id ForRepo: glhProject name ofOwner: glhProject group name.
+	^ (importer parseCommitResult: response) diffs
 ]
 
 { #category : 'initialization' }
-RitaMooseRepository >> initializeOwner: anOwner name: aName token: aToken [
+RitaMooseRepository >> initializeOwner: anOwner name: aName [
 
 	glhModel := GLHModel new name: aName.
 	importer := GithubModelImporter new
 		            glhModel: glhModel;
-		            privateToken: aToken;
+		            privateToken: (self class token ifNil: [ self error: 'Set the token first: RitaMooseRepository token: ''ghp_...''' ]);
 		            yourself.
 	glhProject := importer importProject: aName ofGroup: anOwner.
+	self flag: #todo. "Do not hardcode a language"
 	language := RitaMooseJavaLanguage new
 ]
 

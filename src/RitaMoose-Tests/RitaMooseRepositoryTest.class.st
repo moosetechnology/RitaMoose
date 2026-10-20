@@ -5,7 +5,8 @@ Class {
 	#name : 'RitaMooseRepositoryTest',
 	#superclass : 'TestCase',
 	#instVars : [
-		'repository'
+		'repository',
+		'oldToken'
 	],
 	#category : 'RitaMoose-Tests',
 	#package : 'RitaMoose-Tests'
@@ -36,9 +37,17 @@ RitaMooseRepositoryTest >> diffFrom: anOldPath to: aNewPath added: anAddedBoolea
 RitaMooseRepositoryTest >> setUp [
 
 	super setUp.
+	oldToken := RitaMooseRepository token.
 	repository := RitaMooseFakeRepository new
 		              language: RitaMooseJavaLanguage new;
 		              yourself
+]
+
+{ #category : 'running' }
+RitaMooseRepositoryTest >> tearDown [
+
+	RitaMooseRepository token: oldToken.
+	super tearDown
 ]
 
 { #category : 'tests' }
@@ -57,6 +66,92 @@ RitaMooseRepositoryTest >> testAddedJavaFileIsOnlyAfter [
 	models := repository modelsFor: (self commitWithParents: #( 'c1' )).
 	self assert: models before isEmpty.
 	self assert: models after keys asArray equals: #( 'B.java' )
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testChangedFilePrintString [
+
+	| changedFile |
+	changedFile := RitaMooseChangedFile fromDiff: (self
+			                diffFrom: 'README.md'
+			                to: 'README.md'
+			                added: false
+			                deleted: false).
+	self assert: changedFile printString equals: 'Modified README.md'
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testChangedFileStoresAChangeKindObject [
+
+	| changedFile |
+	changedFile := RitaMooseChangedFile fromDiff: (self
+			                diffFrom: nil
+			                to: 'B.java'
+			                added: true
+			                deleted: false).
+	self assert: changedFile kind equals: RitaMooseAddedFile
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testChangedFilesOfRootCommit [
+
+	repository diffs: { (self
+			 diffFrom: nil
+			 to: 'D.java'
+			 added: true
+			 deleted: false) }.
+	self assert: (repository changedFilesOf: (self commitWithParents: #(  ))) first isAdded
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testChangedFilesReportTheKindOfEachChange [
+
+	| changedFiles renamed |
+	renamed := self
+		           diffFrom: 'old.java'
+		           to: 'new.java'
+		           added: false
+		           deleted: false.
+	renamed renamed_file: true.
+	repository diffs: {
+			(self
+				 diffFrom: nil
+				 to: 'B.java'
+				 added: true
+				 deleted: false).
+			(self
+				 diffFrom: 'C.java'
+				 to: nil
+				 added: false
+				 deleted: true).
+			renamed.
+			(self
+				 diffFrom: 'README.md'
+				 to: 'README.md'
+				 added: false
+				 deleted: false) }.
+	changedFiles := repository changedFilesOf: (self commitWithParents: #( 'c1' )).
+	self assert: changedFiles size equals: 4.
+	self assert: changedFiles first isAdded.
+	self assert: changedFiles first path equals: 'B.java'.
+	self assert: changedFiles second isDeleted.
+	self assert: changedFiles second path equals: 'C.java'.
+	self assert: changedFiles third isRenamed.
+	self assert: changedFiles third path equals: 'new.java'.
+	self assert: changedFiles third oldPath equals: 'old.java'.
+	self assert: changedFiles fourth isModified.
+	self assert: changedFiles fourth path equals: 'README.md'
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testCommitPrintStringShowsShortShaAndFirstLine [
+
+	| commit |
+	commit := RitaMooseCommit on: (GLHCommit new
+			           id: '703e9592772fa9ea14ce142d51d4eeb5d860de0a';
+			           message: 'Fix the parser' , String cr , 'with details';
+			           yourself).
+	self assert: commit printString equals: 'RitaMooseCommit 703e959 Fix the parser'
 ]
 
 { #category : 'tests' }
@@ -123,6 +218,12 @@ RitaMooseRepositoryTest >> testNonJavaFilesAreIgnored [
 	models := repository modelsFor: (self commitWithParents: #( 'c1' )).
 	self assert: models before isEmpty.
 	self assert: models after isEmpty
+]
+
+{ #category : 'tests' }
+RitaMooseRepositoryTest >> testRepositoryCannotBeCreatedWithoutToken [
+
+	self should: [ RitaMooseRepository owner: 'moosetechnology' name: 'VerveineJ' ] raise: Error
 ]
 
 { #category : 'tests' }

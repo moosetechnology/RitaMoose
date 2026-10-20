@@ -44,12 +44,6 @@ RitaMooseCommit >> glhCommit: aGLHCommit [
 ]
 
 { #category : 'accessing' }
-RitaMooseCommit >> id [
-
-	^ glhCommit id
-]
-
-{ #category : 'accessing' }
 RitaMooseCommit >> message [
 
 	^ glhCommit message
@@ -66,7 +60,11 @@ RitaMooseCommit >> printOn: aStream [
 
 	aStream
 		nextPutAll: 'RitaMooseCommit ';
-		nextPutAll: self id
+		nextPutAll: self shortSha.
+	self message ifNotNil: [ :text |
+			aStream
+				nextPutAll: ' ';
+				nextPutAll: (text lines ifEmpty: [ '' ] ifNotEmpty: [ :lines | lines first ]) ]
 ]
 
 { #category : 'accessing' }
@@ -77,6 +75,7 @@ RitaMooseCommit >> sha [
 
 { #category : 'accessing' }
 RitaMooseCommit >> shortSha [
+	"I don't like this, but this is due to https://github.com/moosetechnology/GitProjectHealth/issues/290"
 
-	^ glhCommit short_id
+	^ glhCommit id first: 7
 ]
