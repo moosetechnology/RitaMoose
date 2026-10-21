@@ -31,7 +31,7 @@ BaselineOfRitaMoose >> baseline: spec [
 { #category : 'dependencies' }
 BaselineOfRitaMoose >> gitProjectHealth: spec [
 
-	spec baseline: 'GitProjectHealth' with: [ spec repository: 'github://moosetechnology/GitProjectHealth:main/src' ]
+	spec baseline: 'GitProjectHealth' with: [ spec repository: 'github://moosetechnology/GitProjectHealth:develop/src' ]
 ]
 
 { #category : 'accessing' }
