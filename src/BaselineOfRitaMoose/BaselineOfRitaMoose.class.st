@@ -10,28 +10,26 @@ Class {
 
 { #category : 'baselines' }
 BaselineOfRitaMoose >> baseline: spec [
+
 	<baseline>
-	spec
-		for: #common
-		do: [
-			"Dependencies"
+	spec for: #common do: [ "Dependencies"
 			self gitProjectHealth: spec.
 
 			"Packages"
 			spec
-				package: 'RitaMoose';
-				package: 'RitaMoose-Tests' with: [ spec requires: #('RitaMoose') ].
+				package: 'RitaMoose' with: [ spec requires: #( 'GitLabHealth' ) ];
+				package: 'RitaMoose-Tests' with: [ spec requires: #( 'RitaMoose' ) ].
 
 			"Groups"
 			spec
-				group: 'Core' with: #('RitaMoose');
-				group: 'Tests' with: #('RitaMoose-Tests') ].
+				group: 'Core' with: #( 'RitaMoose' );
+				group: 'Tests' with: #( 'RitaMoose-Tests' ) ]
 ]
 
 { #category : 'dependencies' }
 BaselineOfRitaMoose >> gitProjectHealth: spec [
 
-	spec baseline: 'GitProjectHealth' with: [ spec repository: 'github://moosetechnology/GitProjectHealth:develop/src' ]
+	spec baseline: 'GitLabHealth' with: [ spec repository: 'github://moosetechnology/GitProjectHealth:develop/src' ]
 ]
 
 { #category : 'accessing' }
