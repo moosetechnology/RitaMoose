@@ -87,13 +87,8 @@ RitaMooseRepository >> decodeContent: aResponse [
 
 { #category : 'private' }
 RitaMooseRepository >> diffsOf: aGLHCommit [
-	"Diffs of the commit, read from GitHub without importing them into the GitProjectHealth model:
-	importing them there fails when the model already holds a diff (its equality block expects diff ranges)."
 
-	| response |
-	self flag: #todo. "I should import the difh with #importDiffOfCommit:"
-	response := importer repoApi commits getCommit: aGLHCommit id ForRepo: glhProject name ofOwner: glhProject group name.
-	^ (importer parseCommitResult: response) diffs
+	^ importer importDiffOfCommit: aGLHCommit
 ]
 
 { #category : 'initialization' }
